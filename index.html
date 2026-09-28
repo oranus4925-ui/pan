@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>โรงงานชุลมุน: ภารกิจช่างมือโปร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.26.25/sweetalert2.all.min.js"></script>
+<style>
+:root{
+  box-sizing:border-box;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+  --bg:#12171f;
+  --panel:#212b39;
+  --panel2:#2c3849;
+  --line:#455a75;
+  --ink:#ffffff;
+  --dim:#c3d2e3;
+  --steel:#5c7ca6;
+  --safety:#ffc419;
+  --hazard:#ff6b3d;
+  --good:#42d392;
+  --wood:#c68642;
+  --radius:18px;
+}
+:root:not([data-theme="dark"]){
+  --bg:#12171f;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Mali','Noto Sans Thai',system-ui,sans-serif;
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  line-height:1.4;
+}
+#app{height:100%;display:flex;flex-direction:column;gap:8px;
+  padding:calc(8px + var(--safe-t)) calc(8px + var(--safe-r)) calc(8px + var(--safe-b)) calc(8px + var(--safe-l));
+  max-width:1200px;margin:0 auto}
+
+/* ---------- top bar ---------- */
+#topbar{
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  background:linear-gradient(180deg,#2a3646,#1c2531);
+  border:1.5px solid var(--line);border-radius:var(--radius);
+  padding:8px 12px;flex:none;
+}
+.mission{font-weight:800;font-size:18px;margin-right:auto;line-height:1.2}
+.mission small{display:block;font-weight:600;font-size:12.5px;color:var(--dim)}
+.chip{
+  display:flex;align-items:center;gap:5px;font-size:15px;font-weight:700;
+  background:var(--panel2);border:1.5px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap;
+}
+.chip b{font-weight:800}
+.chip.time{color:var(--safety)}
+.chip.warn{color:var(--hazard);border-color:var(--hazard)}
+.iconbtn{
+  background:var(--panel2);border:1.5px solid var(--line);color:var(--ink);
+  border-radius:12px;font-size:19px;width:42px;height:38px;cursor:pointer;font-family:inherit;
+}
+.iconbtn:active{transform:translateY(1px)}
+
+/* ---------- stage ---------- */
+#stage{position:relative;flex:1;min-height:0;border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--line);background:#0d1219}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+
+.panel{
+  position:absolute;background:rgba(26,34,46,.94);border:1.5px solid var(--line);
+  border-radius:16px;padding:10px 11px;backdrop-filter:blur(3px);font-size:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+#leftPanel{left:9px;top:9px;width:158px}
+#rightPanel{right:9px;top:9px;width:184px;max-height:calc(100% - 130px);overflow:auto;
+  background:rgba(20,27,37,.42);backdrop-filter:blur(1.5px);border-color:rgba(69,90,117,.55)}
+#rightPanel .plabel,#rightPanel .goal{text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.plabel{font-size:12.5px;color:var(--dim);margin:0 0 4px;font-weight:700}
+.bar{height:12px;border-radius:999px;background:#0d1219;overflow:hidden;margin-bottom:9px;border:1px solid #0a0e14}
+.bar i{display:block;height:100%;transition:width .2s}
+.bar.hp i{background:linear-gradient(90deg,#ff6b3d,#ff9d6b)}
+.bar.safe i{background:linear-gradient(90deg,#ffc419,#ffe58a)}
+.ppes{display:flex;gap:5px;flex-wrap:wrap;font-size:20px}
+.ppes span{opacity:.22;filter:grayscale(1)}
+.ppes span.on{opacity:1;filter:none}
+.slots{display:flex;gap:6px;flex-wrap:wrap}
+.slot{
+  width:38px;height:38px;border-radius:11px;background:#0f151d;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer;position:relative;
+}
+.slot.sel{border-color:var(--safety);box-shadow:0 0 0 3px rgba(255,196,25,.35)}
+.goal{display:flex;gap:7px;align-items:flex-start;line-height:1.35;margin-bottom:7px;font-size:14px;color:var(--dim);font-weight:600}
+.goal b{font-weight:800;color:var(--ink)}
+.goal.done{color:var(--good);text-decoration:line-through;opacity:.8}
+.goal i{font-style:normal;flex:none;font-size:17px}
+hr.sep{border:0;border-top:1.5px solid var(--line);margin:10px 0}
+
+/* ---------- mission toggle: extra prominent ---------- */
+.panelhead{
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+  margin:0 0 8px;padding:9px 12px;border-radius:14px;-webkit-tap-highlight-color:transparent;
+  min-height:40px;
+  background:linear-gradient(180deg,#ffd75e,#ffb800);
+  border-bottom:4px solid #c98c00;
+  box-shadow:0 2px 0 rgba(0,0,0,.05);
+  transition:transform .12s,border-bottom-width .12s;
+}
+.panelhead:active{transform:translateY(2px);border-bottom-width:1px}
+.panelhead .plabel{margin:0;color:#20160a;font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px}
+.panelhead .cnt{color:#20160a;font-weight:800;background:rgba(255,255,255,.55);border-radius:999px;padding:2px 9px;font-size:13px}
+.panelhead .car{font-size:20px;color:#20160a;opacity:.9;transition:transform .2s;flex:none;margin-left:8px;font-weight:900}
+#goalsWrap.collapsed #goals{display:none}
+#goalsWrap.collapsed .panelhead .car{transform:rotate(-90deg)}
+#goalsWrap.collapsed{margin-bottom:0}
+@keyframes goalPop{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+#goalsHead.attn{animation:goalPop .85s ease-in-out 3}
+#stage.panels-hidden #leftPanel,#stage.panels-hidden #rightPanel{display:none}
+#btnPanels.active{background:var(--safety);color:#20160a;border-color:var(--safety)}
+
+/* joystick + hint */
+#stick{position:absolute;left:16px;bottom:16px;width:118px;height:118px;border-radius:50%;
+  background:rgba(30,40,53,.55);border:1.5px solid var(--line);touch-action:none}
+#stick i{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;
+  background:rgba(255,196,25,.8);border:2px solid #fff3;transition:none}
+#hint{
+  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+  background:rgba(255,196,25,.97);color:#20160a;font-weight:800;font-size:15px;
+  padding:9px 16px;border-radius:999px;max-width:85%;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none;
+}
+#hint.show{opacity:1}
+#toast{
+  position:absolute;left:50%;top:16px;transform:translateX(-50%);
+  background:rgba(255,107,61,.97);color:#fff;font-weight:800;font-size:15px;
+  padding:9px 16px;border-radius:12px;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:75%;
+}
+#toast.show{opacity:1}
+
+/* ---------- bottom ---------- */
+#bottom{display:flex;gap:8px;flex:none;align-items:center;justify-content:center;flex-wrap:wrap}
+.btn{
+  font-family:inherit;font-weight:800;font-size:16px;color:#20160a;
+  background:linear-gradient(180deg,#ffd75e,#ffb800);border:0;border-bottom:4px solid #c98c00;
+  border-radius:14px;padding:13px 20px;cursor:pointer;
+}
+.btn:active{transform:translateY(2px);border-bottom-width:1px}
+.btn.ghost{background:var(--panel2);color:var(--ink);border-bottom:4px solid #16202c}
+.btn.wide{min-width:140px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.keyhint{font-size:12px;opacity:.75;font-weight:600}
+
+/* ---------- overlays ---------- */
+.overlay{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(9,13,19,.92);padding:16px;z-index:5;overflow:auto;
+}
+.overlay.show{display:flex}
+.card{
+  background:var(--panel);border:1.5px solid var(--line);border-radius:22px;
+  padding:22px;max-width:600px;width:100%;text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.card h1{font-size:30px;margin:0 0 6px;line-height:1.2;font-weight:800}
+.card h2{font-size:24px;margin:0 0 10px;font-weight:800}
+.card p{color:var(--dim);font-size:15.5px;line-height:1.55;margin:8px 0;font-weight:500}
+.stars{font-size:40px;letter-spacing:8px;margin:8px 0}
+.scoregrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0}
+.scoregrid div{background:var(--panel2);border-radius:13px;padding:10px;font-size:13.5px;color:var(--dim);font-weight:600}
+.scoregrid b{display:block;font-size:22px;color:var(--ink)}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px;text-align:left}
+.item{background:var(--panel2);border:1.5px solid var(--line);border-radius:14px;padding:12px;font-size:13.5px}
+.item .e{font-size:28px}
+.item b{display:block;font-size:15px;margin:3px 0}
+.item button{margin-top:8px;width:100%;font-family:inherit;font-weight:800;font-size:13.5px;padding:9px;border-radius:11px;
+  border:0;background:var(--safety);color:#20160a;cursor:pointer}
+.item button.owned{background:var(--panel);color:var(--good);border:1.5px solid var(--good)}
+.item button:disabled{opacity:.5}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;text-align:left}
+.lv{background:var(--panel2);border:1.5px solid var(--line);border-radius:14px;padding:13px;cursor:pointer}
+.lv.locked{opacity:.45;cursor:not-allowed}
+.lv b{display:block;font-size:15px}
+.lv small{color:var(--dim);font-size:12.5px}
+.ach{display:flex;gap:10px;align-items:center;background:var(--panel2);border-radius:14px;padding:10px;margin-bottom:8px;text-align:left}
+.ach .e{font-size:26px;filter:grayscale(1);opacity:.4}
+.ach.on .e{filter:none;opacity:1}
+.ach b{font-size:15px}
+.ach small{color:var(--dim);font-size:12.5px;display:block}
+.title-logo{font-size:36px;font-weight:800;line-height:1.15}
+.title-logo span{color:var(--safety)}
+
+@media(max-width:640px){
+  #app{gap:6px;padding:calc(5px + var(--safe-t)) calc(5px + var(--safe-r)) calc(5px + var(--safe-b)) calc(5px + var(--safe-l))}
+  #topbar{padding:6px 8px;gap:6px}
+  .mission{font-size:14.5px;width:100%;margin:0 0 3px;order:-1}
+  .mission small{font-size:11px}
+  .chip{font-size:12px;padding:3px 9px}
+  .iconbtn{width:36px;height:34px;font-size:16px}
+  #leftPanel{width:112px;font-size:12.5px;padding:8px 9px;top:6px;left:6px}
+  #rightPanel{width:130px;font-size:12.5px;padding:8px 9px;top:6px;right:6px;max-height:calc(100% - 104px)}
+  .slot{width:34px;height:34px;font-size:17px}
+  .goal{font-size:12.5px}
+  .panelhead{padding:8px 10px}
+  .panelhead .plabel{font-size:13px}
+  .panelhead .cnt{font-size:11.5px}
+  #stick{left:10px;bottom:10px;width:100px;height:100px}
+  #stick i{width:44px;height:44px;margin:-22px 0 0 -22px}
+  #bottom{gap:6px;flex-wrap:nowrap;justify-content:space-between}
+  .btn{font-size:14px;padding:11px 10px;flex:1 1 0;min-width:0}
+  .btn.wide{flex:1.3 1 0}
+  .keyhint{display:none}
+  .card h1{font-size:24px}
+  .card{padding:16px}
+}
+@media(max-width:380px){
+  #leftPanel{width:98px;font-size:11.5px}
+  #rightPanel{width:114px;font-size:11.5px}
+  .ppes{font-size:15px}
+  .bar{height:8px;margin-bottom:6px}
+}
+@media(max-height:520px) and (max-width:900px){
+  #leftPanel,#rightPanel{max-height:calc(100% - 20px)}
+  #stick{width:90px;height:90px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div class="mission" id="mTitle">โรงงานชุลมุน<small id="mSub">ภารกิจช่างมือโปร</small></div>
+    <div class="chip">🏅 <b id="cScore">0</b></div>
+    <div class="chip">🪙 <b id="cCoin">0</b></div>
+    <div class="chip time">⏱ <b id="cTime">--</b></div>
+    <div class="chip" id="cSafeChip">🛡 <b id="cSafe">100</b></div>
+    <button class="iconbtn" id="btnPanels" title="ซ่อน/แสดงแผงข้อมูล">🗂️</button>
+    <button class="iconbtn" id="btnSound" title="เสียง">🔊</button>
+    <button class="iconbtn" id="btnPause" title="หยุดพัก">⏸</button>
+  </div>
+
+  <div id="stage">
+    <canvas id="cv"></canvas>
+
+    <div class="panel" id="leftPanel">
+      <p class="plabel">พลังชีวิต</p>
+      <div class="bar hp"><i id="barHp" style="width:100%"></i></div>
+      <p class="plabel">ความปลอดภัย</p>
+      <div class="bar safe"><i id="barSafe" style="width:100%"></i></div>
+      <p class="plabel">อุปกรณ์ที่สวมอยู่</p>
+      <div class="ppes" id="ppeRow">
+        <span data-p="goggles">🥽</span><span data-p="gloves">🧤</span>
+        <span data-p="mask">😷</span><span data-p="apron">👕</span>
+      </div>
+    </div>
+
+    <div class="panel" id="rightPanel">
+      <p class="plabel">ช่องเก็บของ (กด 1-4)</p>
+      <div class="slots" id="slots"></div>
+      <hr class="sep">
+      <div id="goalsWrap">
+        <div class="panelhead" id="goalsHead">
+          <p class="plabel">ขั้นตอนภารกิจ <span class="cnt" id="goalsCnt"></span></p>
+          <span class="car">▾</span>
+        </div>
+        <div id="goals"></div>
+      </div>
+    </div>
+
+    <div id="stick"><i></i></div>
+    <div id="hint"></div>
+    <div id="toast"></div>
+
+    <!-- overlays -->
+    <div class="overlay show" id="ovMenu">
+      <div class="card">
+        <div class="title-logo">โรงงาน<span>ชุลมุน</span></div>
+        <p style="font-size:14px;color:var(--ink);margin-top:2px">ภารกิจช่างมือโปร</p>
+        <p>สวมบทเป็น “ช่างน้อย” เดินสำรวจโรงงาน เลือกวัสดุ หยิบเครื่องมือ สวม PPE<br>แล้วสร้างชิ้นงานให้ <b style="color:var(--safety)">ถูกต้อง ปลอดภัย และเป็นระเบียบ</b></p>
+        <p style="margin-top:6px;font-size:14px;color:var(--dim);display:flex;align-items:center;justify-content:center;gap:6px">
+          👤 ผู้เล่น: <b id="playerNameShow" style="color:var(--ink)">-</b>
+          <button class="iconbtn" id="btnEditName" title="เปลี่ยนชื่อ" style="width:auto;height:auto;padding:4px 10px;font-size:13px">✏️ เปลี่ยนชื่อ</button>
+        </p>
+        <div class="row">
+          <button class="btn wide" id="btnStart">เริ่มเล่น</button>
+          <button class="btn ghost" id="btnLevels">เลือกด่าน</button>
+          <button class="btn ghost" id="btnShop">ร้านค้า 🪙</button>
+          <button class="btn ghost" id="btnAch">เหรียญรางวัล</button>
+        </div>
+        <p style="margin-top:12px;font-size:11px">คอมพิวเตอร์: WASD / ลูกศร เดิน · E หยิบ-ใช้ (กดค้างเมื่อทำงาน) · Q วาง · 1-4 เลือกช่อง<br>มือถือ: จอยสติ๊กซ้าย + ปุ่มด้านล่าง</p>
+      </div>
+    </div>
+
+    <div class="overlay" id="ovLevels"><div class="card">
+      <h2>เลือกด่าน</h2><div class="levels" id="lvList"></div>
+      <div class="row"><button class="btn ghost" data-close>กลับ</button></div>
+    </div></div>
+
+    <div class="overlay" id="ovShop"><div class="card">
+      <h2>ร้านช่างน้อย</h2>
+      <p>ใช้เหรียญช่างแต่งตัวให้เท่ขึ้น (ของตกแต่งล้วน ๆ ไม่ทำให้เล่นง่ายกว่าคนอื่น) · มี <b id="shopCoin">0</b> 🪙</p>
+      <div class="shopgrid" id="shopGrid"></div>
+      <div class="row"><button class="btn ghost" data-close>กลับ</button></div>
+    </div></div>
+
+    <div class="overlay" id="ovAch"><div class="card">
+      <h2>เหรียญรางวัล</h2><div id="achList" style="margin-top:10px"></div>
+      <div class="row"><button class="btn ghost" data-close>กลับ</button></div>
+    </div></div>
+
+    <div class="overlay" id="ovPause"><div class="card">
+      <h2>พักก่อน</h2><p id="pauseTip">หายใจลึก ๆ แล้วกลับไปลุยต่อ</p>
+      <div class="row">
+        <button class="btn" id="btnResume">เล่นต่อ</button>
+        <button class="btn ghost" id="btnRetry">เริ่มด่านใหม่</button>
+        <button class="btn ghost" id="btnQuit">ออกไปหน้าแรก</button>
+      </div>
+    </div></div>
+
+    <div class="overlay" id="ovEnd"><div class="card">
+      <h2 id="endTitle">ภารกิจสำเร็จ!</h2>
+      <div class="stars" id="endStars">⭐⭐⭐</div>
+      <p id="endMsg">ช่างมือโปร!</p>
+      <div class="scoregrid" id="endGrid"></div>
+      <p id="endCoins" style="color:var(--safety);font-weight:700"></p>
+      <div class="row" id="endRow"></div>
+    </div></div>
+
+    <div class="overlay" id="ovFinal"><div class="card">
+      <h1>ภารกิจสำเร็จ!</h1>
+      <div style="font-size:52px">🏗️🧑‍🏭🧰</div>
+      <p style="color:var(--ink);font-size:15px">คุณไม่ได้เป็นแค่ช่างที่ทำงานเสร็จ<br>แต่เป็นช่างที่ทำงาน<b style="color:var(--safety)">อย่างปลอดภัย</b></p>
+      <div class="scoregrid" id="finalGrid"></div>
+      <div class="row">
+        <button class="btn" id="btnAgain">เล่นอีกครั้ง</button>
+        <button class="btn ghost" id="btnPickLv">เลือกด่าน</button>
+        <button class="btn ghost" id="btnSeeAch">ดู Achievement</button>
+      </div>
+    </div></div>
+  </div>
+
+  <div id="bottom">
+    <button class="btn ghost" id="btnPrev">◀ ช่อง</button>
+    <button class="btn wide" id="btnAct">หยิบ / ใช้ <span class="keyhint">(E)</span></button>
+    <button class="btn ghost" id="btnDrop">วางของ <span class="keyhint">(Q)</span></button>
+    <button class="btn ghost" id="btnNext">ช่อง ▶</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   โรงงานชุลมุน: ภารกิจช่างมือโปร
+   เกม Top-down 2D · Canvas · ไม่มี dependency
+   ============================================================ */
+const W = 960, H = 600;
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let view = {s:1, ox:0, oy:0};
+
+function resize(){
+  const r = cv.parentElement.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  cv.width = Math.max(1, Math.floor(r.width*dpr));
+  cv.height = Math.max(1, Math.floor(r.height*dpr));
+  const s = Math.min(r.width/W, r.height/H);
+  view.s = s*dpr;
+  view.ox = (r.width - W*s)/2*dpr;
+  view.oy = (r.height - H*s)/2*dpr;
+}
+window.addEventListener('resize', resize);
+
+/* ---------------- storage ---------------- */
+const SAVE_KEY = 'chang-noi-save-v1';
+let autoNextTimer = null;
+let save = {coins:0, unlocked:1, ach:{}, owned:{}, equip:{suit:'blue',helmet:'yellow',box:'classic'}, muted:false, best:{}, playerName:''};
+try{ const raw = localStorage.getItem(SAVE_KEY); if(raw) save = Object.assign(save, JSON.parse(raw)); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+
+/* ---------------- audio ---------------- */
+let ac = null, bgmTimer = null, bgmStep = 0;
+function audioOn(){
+  if(save.muted) return false;
+  if(!ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return false; } }
+  if(ac.state === 'suspended') ac.resume();
+  return true;
+}
+function tone(f, dur, type, vol, f2){
+  if(!audioOn()) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type||'square'; o.frequency.setValueAtTime(f, ac.currentTime);
+  if(f2) o.frequency.exponentialRampToValueAtTime(f2, ac.currentTime+dur);
+  g.gain.setValueAtTime(vol||0.05, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0008, ac.currentTime+dur);
+  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur+0.02);
+}
+function noise(dur, vol){
+  if(!audioOn()) return;
+  const n = Math.floor(ac.sampleRate*dur);
+  const buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*(1-i/n);
+  const s = ac.createBufferSource(), g = ac.createGain();
+  s.buffer = buf; g.gain.value = vol||0.06; s.connect(g); g.connect(ac.destination); s.start();
+}
+const SFX = {
+  step:()=>tone(120,0.05,'square',0.02,90),
+  pick:()=>tone(620,0.09,'triangle',0.07,900),
+  drop:()=>tone(300,0.08,'triangle',0.05,180),
+  good:()=>{tone(660,0.1,'triangle',0.07);setTimeout(()=>tone(880,0.14,'triangle',0.07),90);},
+  bad:()=>tone(180,0.25,'sawtooth',0.06,80),
+  warn:()=>{tone(950,0.08,'square',0.05);setTimeout(()=>tone(950,0.08,'square',0.05),140);},
+  drill:()=>noise(0.09,0.05),
+  cut:()=>noise(0.12,0.05),
+  screw:()=>tone(420,0.07,'square',0.04,520),
+  clean:()=>noise(0.16,0.035),
+  win:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.18,'triangle',0.07),i*110));},
+  lose:()=>{[440,330,247].forEach((f,i)=>setTimeout(()=>tone(f,0.25,'sawtooth',0.06),i*150));},
+  door:()=>tone(240,0.3,'sine',0.06,520)
+};
+const BGM = [0,3,7,10,7,3,5,8,12,8,5,3];
+function startBgm(){
+  stopBgm();
+  if(save.muted) return;
+  bgmTimer = setInterval(()=>{
+    if(G.screen!=='play' || G.paused) return;
+    const n = BGM[bgmStep%BGM.length]; bgmStep++;
+    tone(196*Math.pow(2,n/12), 0.16, 'triangle', 0.022);
+    if(bgmStep%4===0) tone(98, 0.14, 'sine', 0.03);
+  }, 260);
+}
+function stopBgm(){ if(bgmTimer){ clearInterval(bgmTimer); bgmTimer = null; } }
+
+/* ---------------- items ---------------- */
+const ITEMS = {
+  wood:     {n:'ไม้',        e:'🪵', t:'mat', c:'#c68642', d:'แข็งแรง รับน้ำหนักได้ดี'},
+  acrylic:  {n:'อะคริลิก',   e:'💠', t:'mat', c:'#7fd8e8', d:'โปร่งใส มองเห็นด้านใน'},
+  plastic:  {n:'พลาสติก',    e:'🟩', t:'mat', c:'#6fcf7f', d:'เบา ตัดและขึ้นรูปง่าย'},
+  metal:    {n:'โลหะ',       e:'🔩', t:'mat', c:'#adc0d4', d:'แข็งแรงมาก รับน้ำหนักได้'},
+  cutter:   {n:'คัตเตอร์',   e:'🔪', t:'tool', c:'#ff8a5c', d:'ตัดแผ่นพลาสติก/กระดาษแข็ง'},
+  scissors: {n:'กรรไกร',     e:'✂️', t:'tool', c:'#ff8a5c', d:'ตัดกระดาษและวัสดุบาง'},
+  drill:    {n:'สว่าน',      e:'🛠️', t:'tool', c:'#ffc419', d:'เจาะรูไม้ พลาสติก โลหะ'},
+  screwdriver:{n:'ไขควง',    e:'🪛', t:'tool', c:'#ffc419', d:'ขันและคลายสกรู'},
+  pliers:   {n:'คีม',        e:'🗜️', t:'tool', c:'#9fb0c4', d:'จับ ดัด ตัดลวด'},
+  hammer:   {n:'ค้อน',       e:'🔨', t:'tool', c:'#9fb0c4', d:'ตอกและปรับแต่งชิ้นงาน'},
+  board:    {n:'ชิ้นงานไม้',  e:'🪵', t:'mat', c:'#c68642', d:'ชิ้นงานที่กำลังทำ'},
+  toolbox:  {n:'กล่องเครื่องมือ', e:'🧰', t:'mat', c:'#ffc419', d:'ชิ้นงานที่สร้างเสร็จ'}
+};
+const PPE = {
+  goggles:{n:'แว่นตานิรภัย', e:'🥽'}, gloves:{n:'ถุงมือ', e:'🧤'},
+  mask:{n:'หน้ากาก', e:'😷'}, apron:{n:'ผ้ากันเปื้อน', e:'👕'}
+};
+const SUITS = {blue:'#3f6fb5', green:'#3f9b6a', orange:'#e07a3f', purple:'#7b5fc0'};
+const HELMETS = {yellow:'#ffc419', white:'#eef3f8', red:'#ff6b3d', lime:'#9ade4a'};
+const SHOP = [
+  {id:'suit_green', e:'👖', n:'ชุดช่างเขียว', p:40, apply:()=>{save.equip.suit='green'}, grp:'suit', val:'green'},
+  {id:'suit_orange',e:'🧥', n:'ชุดช่างส้ม',  p:40, grp:'suit', val:'orange'},
+  {id:'suit_purple',e:'🦺', n:'ชุดช่างม่วง', p:60, grp:'suit', val:'purple'},
+  {id:'hat_white',  e:'⛑️', n:'หมวกขาว',    p:35, grp:'helmet', val:'white'},
+  {id:'hat_red',    e:'🎩', n:'หมวกแดง',    p:35, grp:'helmet', val:'red'},
+  {id:'hat_lime',   e:'🪖', n:'หมวกเขียวมะนาว', p:50, grp:'helmet', val:'lime'},
+  {id:'box_pro',    e:'🧰', n:'กล่องเครื่องมือมือโปร', p:70, grp:'box', val:'pro'},
+  {id:'bench_pro',  e:'🪚', n:'โต๊ะช่างรุ่นใหม่', p:80, grp:'bench', val:'pro'}
+];
+const ACHS = [
+  {id:'safe',  e:'🏆', n:'ช่างปลอดภัย',   d:'จบด่านโดยค่าความปลอดภัยไม่ต่ำกว่า 90'},
+  {id:'tools', e:'🏆', n:'มือโปรเครื่องมือ', d:'จบด่านโดยไม่ใช้เครื่องมือผิดเลย'},
+  {id:'ppe',   e:'🏆', n:'PPE Master',   d:'สวมอุปกรณ์ป้องกันครบตามที่งานต้องการ'},
+  {id:'fast',  e:'🏆', n:'ช่างเร็ว',      d:'จบด่านโดยเหลือเวลามากกว่าครึ่ง'},
+  {id:'clean', e:'🏆', n:'โรงงานสะอาด',  d:'จบด่านโดยพื้นที่สะอาดและเก็บเครื่องมือครบ'},
+  {id:'pro',   e:'🏆', n:'ช่างมือโปร',    d:'ผ่านครบทุกด่านด้วยดาวรวม 7 ดวงขึ้นไป'}
+];
+
+/* ---------------- game state ---------------- */
+const G = {
+  screen:'menu', paused:false, levelIdx:0, ents:[], parts:[], goals:[],
+  safety:100, hp:100, time:0, timeLimit:0, wrong:0, ppeMiss:0, runScore:0, runStars:0,
+  player:null, hold:null, eventTimer:0, doorOpen:false, msgLock:0, coworker:null, totalTime:0
+};
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function ent(o){ o.id = uid(); o.w = o.w||44; o.h = o.h||44; G.ents.push(o); return o; }
+function ents(kind){ return G.ents.filter(e=>e.kind===kind); }
+function removeEnt(e){ const i = G.ents.indexOf(e); if(i>=0) G.ents.splice(i,1); }
+
+/* ---------------- HUD ---------------- */
+function setChips(){
+  $('cScore').textContent = G.runScore;
+  $('cCoin').textContent = save.coins;
+  $('cTime').textContent = G.screen==='play' ? Math.ceil(Math.max(0,G.time)) + 'วิ' : '--';
+  $('cSafe').textContent = Math.round(G.safety);
+  $('cSafeChip').className = 'chip' + (G.safety<40 ? ' warn' : '');
+  $('barHp').style.width = Math.max(0,G.hp) + '%';
+  $('barSafe').style.width = Math.max(0,G.safety) + '%';
+  if(G.player) document.querySelectorAll('#ppeRow span').forEach(s=>{
+    s.classList.toggle('on', !!G.player.ppe[s.dataset.p]);
+  });
+}
+function renderSlots(){
+  const box = $('slots'); box.innerHTML = '';
+  const p = G.player; if(!p) return;
+  for(let i=0;i<4;i++){
+    const d = document.createElement('div');
+    d.className = 'slot' + (p.sel===i ? ' sel' : '');
+    const it = p.inv[i];
+    d.textContent = it ? ITEMS[it].e : '';
+    d.title = it ? ITEMS[it].n : 'ว่าง';
+    d.onclick = ()=>{ p.sel = i; renderSlots(); };
+    box.appendChild(d);
+  }
+}
+function renderGoals(){
+  const box = $('goals'); box.innerHTML = '';
+  G.goals.forEach(g=>{
+    const d = document.createElement('div');
+    d.className = 'goal' + (g.done ? ' done' : '');
+    d.innerHTML = '<i>' + (g.done?'✅':'⬜') + '</i><span>' + g.text + '</span>';
+    box.appendChild(d);
+  });
+  const done = G.goals.filter(g=>g.done).length;
+  $('goalsCnt').textContent = done + '/' + G.goals.length;
+}
+function goal(id){ return G.goals.find(g=>g.id===id); }
+function doneGoal(id){
+  const g = goal(id);
+  if(g && !g.done){ g.done = true; renderGoals(); SFX.good(); burst(G.player.x, G.player.y-20, '#42d392', 12); checkLevelDone(); }
+}
+let hintT = 0;
+function hint(t, ms){ $('hint').textContent = t; $('hint').classList.add('show'); hintT = (ms||2600)/1000; }
+function toast(t, ms){ $('toast').textContent = t; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'), ms||2000); }
+
+/* ---------------- safety / score helpers ---------------- */
+function addSafety(v, why){
+  G.safety = Math.max(0, Math.min(100, G.safety + v));
+  if(v < 0){ SFX.bad(); if(why) toast(why); shake(8); }
+  else if(why) hint(why, 1800);
+  if(G.safety <= 0) failLevel('เกิดอุบัติเหตุ! งานช่างต้องเริ่มจากความปลอดภัย');
+}
+function addHp(v){
+  G.hp = Math.max(0, Math.min(100, G.hp + v));
+  if(G.hp <= 0) failLevel('ช่างน้อยบาดเจ็บ! ต้องระวังพื้นที่ทำงานมากกว่านี้');
+}
+let shakeT = 0, shakeA = 0;
+function shake(a){ shakeA = a; shakeT = 0.3; }
+function burst(x, y, color, n, spd){
+  for(let i=0;i<(n||10);i++){
+    const a = Math.random()*Math.PI*2, s = (spd||60)*(0.4+Math.random());
+    G.parts.push({x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s-20, life:0.6+Math.random()*0.4, c:color, r:2+Math.random()*3});
+  }
+}
+
+/* ---------------- level scaffolding ---------------- */
+function wallsBorder(){
+  ent({kind:'wall', x:W/2, y:14, w:W, h:28, solid:true});
+  ent({kind:'wall', x:W/2, y:H-14, w:W, h:28, solid:true});
+  ent({kind:'wall', x:14, y:H/2, w:28, h:H, solid:true});
+  ent({kind:'wall', x:W-14, y:H/2, w:28, h:H, solid:true});
+}
+function crate(x,y,w,h,label){ return ent({kind:'crate', x, y, w:w||60, h:h||50, solid:true, label}); }
+function sign(x,y,text,sub){ return ent({kind:'sign', x, y, w:186, h:72, solid:false, text, sub}); }
+function rack(x, y, item, label){
+  return ent({kind:'rack', x, y, w:64, h:56, solid:true, item, label: label || ('หยิบ' + ITEMS[item].n),
+    onUse(){
+      if(G.player.inv.filter(Boolean).length >= 4 && !G.player.inv.includes(null)){ toast('ช่องเก็บของเต็มแล้ว วางของก่อน (Q)'); return; }
+      if(item === 'drill') G.drillBroken = false;
+      give(item); SFX.pick(); hint('ได้ ' + ITEMS[item].n + ' แล้ว', 1400);
+    }});
+}
+function returnRack(x, y, label){
+  return ent({kind:'return', x, y, w:70, h:56, solid:true, label: label||'เก็บเครื่องมือคืน',
+    onUse(){
+      const it = sel();
+      if(!it || ITEMS[it].t!=='tool'){ toast('เลือกเครื่องมือในช่องเก็บของก่อน'); return; }
+      takeSel(); SFX.drop(); addSafety(3, 'เก็บเครื่องมือเข้าที่ เยี่ยม!');
+      G.toolsReturned = (G.toolsReturned||0)+1;
+      if(G.onReturn) G.onReturn(it);
+    }});
+}
+function lockerSet(x, y, list){
+  list.forEach((p,i)=>{
+    ent({kind:'locker', x: x + i*72, y, w:60, h:60, solid:true, ppe:p, label:'สวม' + PPE[p].n,
+      onUse(){
+        const pl = G.player;
+        pl.ppe[p] = !pl.ppe[p];
+        SFX.pick(); setChips();
+        hint((pl.ppe[p] ? 'สวม' : 'ถอด') + PPE[p].n, 1300);
+        if(G.onPpe) G.onPpe();
+      }});
+  });
+}
+function debris(x,y){ return ent({kind:'debris', x, y, w:34, h:30, solid:false, label:'เก็บเศษวัสดุ',
+  onUse(){ removeEnt(this); SFX.clean(); addSafety(2); G.cleaned = (G.cleaned||0)+1; burst(this.x,this.y,'#9fb0c4',8); if(G.onClean) G.onClean(); } }); }
+function door(x, y, needText){
+  return ent({kind:'door', x, y, w:44, h:110, solid:false, needText});
+}
+function give(item){
+  const p = G.player, i = p.inv.indexOf(null);
+  if(i < 0){ toast('ช่องเก็บของเต็ม'); return false; }
+  p.inv[i] = item; p.sel = i; renderSlots(); return true;
+}
+function sel(){ const p = G.player; return p.inv[p.sel]; }
+function takeSel(){ const p = G.player; const it = p.inv[p.sel]; p.inv[p.sel] = null; renderSlots(); return it; }
+function hasPpe(list){ return list.every(p=>G.player.ppe[p]); }
+function missingPpe(list){ return list.filter(p=>!G.player.ppe[p]); }
+
+function floorItem(x, y, item){
+  return ent({kind:'item', x, y, w:34, h:34, solid:false, item, label:'หยิบ'+ITEMS[item].n,
+    onUse(){ if(give(this.item)){ removeEnt(this); SFX.pick(); } }});
+}
+
+/* ---------------- LEVELS ---------------- */
+const LEVELS = [
+{ name:'ด่าน 1 · ห้องเก็บวัสดุ', sub:'ตามหาวัสดุที่เหมาะสมกับงาน', time:160, ppe:[],
+  build(){
+    wallsBorder();
+    crate(120,110,90,60); crate(120,500,90,60); crate(840,110,90,60); crate(840,500,90,60);
+    rack(190,200,'wood','กองไม้'); rack(190,420,'plastic','แผ่นพลาสติก');
+    rack(770,200,'acrylic','แผ่นอะคริลิก'); rack(770,420,'metal','เหล็กฉาก');
+    const orders = [
+      {t:'สร้างชั้นวางของขนาดเล็กที่ต้องรับน้ำหนัก', ok:['wood','metal'], why:'งานรับน้ำหนักต้องใช้วัสดุที่แข็งแรง'},
+      {t:'ทำป้ายที่มองทะลุเห็นของด้านในได้', ok:['acrylic'], why:'ต้องใช้วัสดุโปร่งใส'},
+      {t:'ทำกล่องน้ำหนักเบา ตัดและขึ้นรูปง่าย', ok:['plastic'], why:'ต้องใช้วัสดุเบาและขึ้นรูปง่าย'}
+    ];
+    G.orderIdx = 0;
+    const sg = sign(480,120, orders[0].t, 'ใบสั่งงานที่ 1/3');
+    ent({kind:'bench', x:480, y:340, w:150, h:96, solid:true, label:'ทดลองวัสดุ (เลือกวัสดุก่อน)', test:0,
+      onUse(){
+        const it = sel();
+        if(!it || ITEMS[it].t!=='mat'){ toast('เลือกวัสดุในช่องเก็บของก่อน แล้วค่อยมาทดลอง'); return; }
+        const o = orders[G.orderIdx];
+        takeSel();
+        if(o.ok.includes(it)){
+          this.test = 1; this.flash = 1;
+          burst(this.x, this.y-20, '#42d392', 18);
+          G.runScore += 40; addSafety(2);
+          doneGoal('o'+G.orderIdx);
+          G.orderIdx++;
+          if(G.orderIdx < orders.length){
+            sg.text = orders[G.orderIdx].t; sg.sub = 'ใบสั่งงานที่ ' + (G.orderIdx+1) + '/3';
+            hint('ผ่าน! ใบสั่งงานถัดไป: ' + orders[G.orderIdx].t, 3200);
+          }
+        }else{
+          this.test = -1; this.flash = 1;
+          burst(this.x, this.y-20, '#ff6b3d', 14);
+          G.wrong++; G.player.mood = 'shock'; G.player.moodT = 1;
+          toast(ITEMS[it].n + ' ไม่เหมาะ: ' + o.why);
+          SFX.bad();
+        }
+      }});
+    door(W-40, 300);
+    G.goals = orders.map((o,i)=>({id:'o'+i, text:'ใบสั่งงาน ' + (i+1) + ': ' + o.t, done:false}));
+    G.tutorial = [
+      {t:'เดินด้วย WASD/ลูกศร หรือจอยสติ๊ก แล้วไปที่กองวัสดุ', at:0},
+      {t:'กด E (หรือปุ่ม “หยิบ/ใช้”) ที่กองวัสดุเพื่อหยิบ', at:2.5},
+      {t:'เอาวัสดุไปที่โต๊ะทดลองตรงกลาง แล้วกด E', at:6}
+    ];
+  }},
+
+{ name:'ด่าน 2 · ห้องเครื่องมือ', sub:'เลือกเครื่องมือให้ตรงกับงาน', time:170, ppe:[],
+  build(){
+    wallsBorder();
+    rack(140,150,'cutter'); rack(140,300,'scissors'); rack(140,450,'drill');
+    rack(820,150,'screwdriver'); rack(820,300,'pliers'); rack(820,450,'hammer');
+    const jobs = [
+      {t:'เจาะรูบนแผ่นไม้', need:'drill', x:360, y:180},
+      {t:'ตัดแผ่นพลาสติกบาง', need:'cutter', x:600, y:180},
+      {t:'ขันสกรูยึดฝากล่อง', need:'screwdriver', x:480, y:430}
+    ];
+    jobs.forEach((j,i)=>{
+      ent({kind:'job', x:j.x, y:j.y, w:120, h:86, solid:true, text:j.t, need:j.need, ok:false,
+        label:'วางเครื่องมือลงช่องงาน', hold:0.8,
+        canUse(){
+          const it = sel();
+          if(this.ok) return 'ช่องงานนี้เสร็จแล้ว';
+          if(!it || ITEMS[it].t!=='tool') return 'เลือกเครื่องมือในช่องเก็บของก่อน';
+          return true;
+        },
+        onDone(){
+          const it = takeSel();
+          if(it === this.need){
+            this.ok = true; burst(this.x,this.y,'#42d392',16); SFX.good();
+            G.runScore += 40; addSafety(3, 'เลือกเครื่องมือถูกงาน!');
+            doneGoal('j'+i);
+          }else{
+            this.fail = 1; G.wrong++; G.player.mood='shock'; G.player.moodT=1.2;
+            floorItem(this.x, this.y+70, it);
+            toast('เครื่องมือนี้ไม่เหมาะกับงาน: ' + ITEMS[it].n + ' ทำ "' + this.text + '" ไม่ได้');
+            addSafety(-6);
+          }
+        }});
+    });
+    sign(480,90,'จับคู่เครื่องมือกับงานให้ครบ 3 ช่อง','ยืนหน้าช่องงานแล้วกด E ค้างไว้');
+    returnRack(700, 520, 'เก็บเครื่องมือคืน');
+    door(W-40, 300);
+    G.goals = jobs.map((j,i)=>({id:'j'+i, text:j.t, done:false}));
+    G.tutorial = [{t:'หยิบเครื่องมือจากชั้น แล้วเอาไปกด E ค้างที่ช่องงาน', at:0.5}];
+  }},
+
+{ name:'ด่าน 3 · ห้อง PPE', sub:'แต่งตัวให้พร้อมก่อนเข้าพื้นที่ทำงาน', time:120, ppe:['goggles','gloves','mask','apron'],
+  build(){
+    wallsBorder();
+    lockerSet(250, 180, ['goggles','gloves','mask','apron']);
+    sign(480, 90, 'งานวันนี้: ตัดและเจาะวัสดุ', 'ต้องสวม แว่นตา + ถุงมือ + หน้ากาก + ผ้ากันเปื้อน');
+    ent({kind:'mirror', x:480, y:400, w:90, h:100, solid:true, label:'ส่องกระจกตรวจความพร้อม',
+      onUse(){
+        const miss = missingPpe(['goggles','gloves','mask','apron']);
+        if(miss.length){ toast('ยังขาด: ' + miss.map(m=>PPE[m].n).join(', ')); SFX.warn(); }
+        else { addSafety(5,'พร้อมลุยแล้ว! ประตูโรงงานเปิดให้เข้าไป'); doneGoal('check'); }
+      }});
+    crate(150,480,90,60); crate(810,480,90,60);
+    door(W-40, 300, 'ติ๊ด! ตรวจสอบอุปกรณ์ความปลอดภัย');
+    G.goals = [
+      {id:'goggles', text:'สวมแว่นตานิรภัย', done:false},
+      {id:'gloves', text:'สวมถุงมือ', done:false},
+      {id:'mask', text:'สวมหน้ากาก', done:false},
+      {id:'apron', text:'สวมผ้ากันเปื้อน', done:false},
+      {id:'check', text:'ส่องกระจกตรวจความพร้อม', done:false}
+    ];
+    G.onPpe = ()=>{
+      ['goggles','gloves','mask','apron'].forEach(p=>{
+        if(G.player.ppe[p]) doneGoal(p);
+        else { const g = goal(p); if(g && g.done){ g.done = false; renderGoals(); } }
+      });
+    };
+    G.onPpe();
+    G.tutorial = [{t:'เดินไปที่ตู้ Locker แล้วกด E เพื่อสวมอุปกรณ์', at:0.5}];
+  }},
+
+];
+
+function looseItems(){ return ents('item').length; }
+
+/* ---------------- level flow ---------------- */
+function startLevel(i){
+  G.levelIdx = i;
+  const L = LEVELS[i];
+  G.ents = []; G.parts = []; G.goals = [];
+  G.safety = 100; G.hp = 100; G.wrong = 0; G.runScore = 0;
+  G.time = L.time; G.timeLimit = L.time; G.doorOpen = false;
+  G.eventTimer = 14; G.cleaned = 0; G.toolsReturned = 0; G.drillBroken = false;
+  G.coworker = null; G.onPpe = null; G.onPickup = null; G.onReturn = null; G.onClean = null;
+  G.orderIdx = 0; G.tutorial = []; G.tutIdx = 0; G.tutT = 0;
+  G.player = {x:480, y:H-90, vx:0, vy:0, dir:'up', anim:0, moving:false,
+    inv:[null,null,null,null], sel:0, ppe:{goggles:false,gloves:false,mask:false,apron:false},
+    mood:'ok', moodT:0, streak:0};
+  L.build();
+  $('mTitle').childNodes[0].nodeValue = L.name;
+  $('mSub').textContent = L.sub;
+  renderSlots(); renderGoals(); setChips();
+  if(window.matchMedia('(max-width:640px)').matches){ $('goalsWrap').classList.add('collapsed'); }
+  const gh = $('goalsHead'); gh.classList.remove('attn'); void gh.offsetWidth; gh.classList.add('attn');
+  G.screen = 'play'; G.paused = false;
+  closeAll();
+  startBgm();
+  hint('เริ่มภารกิจ: ' + L.sub, 2600);
+}
+function checkLevelDone(){
+  const all = G.goals.every(g=>g.done);
+  if(!all) return;
+  const L = LEVELS[G.levelIdx];
+  if(L.boss || G.levelIdx === 3){ finishLevel(); return; }
+  if(!G.doorOpen){ G.doorOpen = true; SFX.door(); hint('ประตูเปิดแล้ว! เดินไปที่ประตูเพื่อไปด่านถัดไป', 3200); }
+}
+function finishLevel(){
+  if(G.screen !== 'play') return;
+  G.screen = 'end'; stopBgm(); SFX.win();
+  const L = LEVELS[G.levelIdx];
+  const correctness = Math.max(0, 100 - G.wrong*20);
+  const safety = Math.round(G.safety);
+  const speed = Math.round(Math.max(0, G.time/G.timeLimit) * 50);
+  const mess = ents('debris').length + looseItems() + G.player.inv.filter(i=>i && ITEMS[i].t==='tool').length;
+  const tidy = Math.max(0, 50 - mess*12);
+  const total = correctness + safety + speed + tidy;
+  let stars = 0;
+  if(correctness >= 80) stars++;
+  if(safety >= 80) stars++;
+  if(speed >= 22) stars++;
+  const coins = Math.round(total/10) + stars*5;
+  save.coins += coins;
+  G.totalTime += (G.timeLimit - G.time);
+  const key = 'L' + G.levelIdx;
+  if(!save.best[key] || save.best[key].total < total) save.best[key] = {total, stars};
+  if(G.levelIdx + 1 >= save.unlocked) save.unlocked = Math.min(LEVELS.length, G.levelIdx + 2);
+  // achievements
+  if(safety >= 90) unlock('safe');
+  if(G.wrong === 0) unlock('tools');
+  if(L.ppe.length && hasPpe(L.ppe)) unlock('ppe');
+  if(G.time > G.timeLimit/2) unlock('fast');
+  if(mess === 0) unlock('clean');
+  const totalStars = Object.values(save.best).reduce((a,b)=>a+b.stars, 0);
+  if(Object.keys(save.best).length >= LEVELS.length && totalStars >= 7) unlock('pro');
+  persist();
+
+  $('endTitle').textContent = 'ภารกิจสำเร็จ!';
+  $('endStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
+  $('endMsg').textContent = stars === 3 ? 'ช่างมือโปร!' : stars === 2 ? 'ทำได้ดี แต่ยังต้องระวังเรื่องความปลอดภัย' : 'ภารกิจสำเร็จ แต่ควรฝึกเพิ่มเติม';
+  $('endGrid').innerHTML =
+    '<div>ความถูกต้อง<b>' + correctness + '</b></div>' +
+    '<div>ความปลอดภัย<b>' + safety + '</b></div>' +
+    '<div>ความเร็ว<b>' + speed + '</b></div>' +
+    '<div>ความเป็นระเบียบ<b>' + tidy + '</b></div>';
+  $('endCoins').textContent = 'คะแนนรวม ' + total + '/300 · ได้รับ ' + coins + ' เหรียญช่าง 🪙';
+  const row = $('endRow'); row.innerHTML = '';
+  if(G.levelIdx + 1 < LEVELS.length){
+    const b = btn('ไปด่านถัดไป', ()=>startLevel(G.levelIdx+1)); row.appendChild(b);
+  }else{
+    const b = btn('ดูผลรวม', showFinal); row.appendChild(b);
+  }
+  row.appendChild(btn('เล่นด่านนี้ใหม่', ()=>startLevel(G.levelIdx), true));
+  row.appendChild(btn('หน้าแรก', toMenu, true));
+  open('ovEnd'); setChips();
+  clearTimeout(autoNextTimer);
+  const goNext = G.levelIdx + 1 < LEVELS.length;
+  autoNextTimer = setTimeout(()=>{
+    if(G.screen !== 'end') return;
+    if(goNext) startLevel(G.levelIdx+1); else showFinal();
+  }, 2600);
+}
+function failLevel(msg){
+  if(G.screen !== 'play') return;
+  G.screen = 'end'; stopBgm(); SFX.lose();
+  $('endTitle').textContent = 'ภารกิจล้มเหลว';
+  $('endStars').textContent = '☆☆☆';
+  $('endMsg').textContent = msg;
+  $('endGrid').innerHTML = '<div>ขั้นตอนที่ทำได้<b>' + G.goals.filter(g=>g.done).length + '/' + G.goals.length + '</b></div>' +
+    '<div>ความปลอดภัยที่เหลือ<b>' + Math.round(G.safety) + '</b></div>';
+  $('endCoins').textContent = 'ลองใหม่อีกครั้ง ช่างเก่งเกิดจากการฝึก';
+  const row = $('endRow'); row.innerHTML = '';
+  row.appendChild(btn('เริ่มด่านใหม่', ()=>startLevel(G.levelIdx)));
+  row.appendChild(btn('หน้าแรก', toMenu, true));
+  open('ovEnd');
+}
+function unlock(id){
+  if(save.ach[id]) return;
+  save.ach[id] = true; persist();
+  const a = ACHS.find(x=>x.id===id);
+  setTimeout(()=>toast('🏆 ได้เหรียญ: ' + a.n, 2600), 600);
+}
+/* ---------------- Google Sheet logging (JSONP, no iframe / no CORS) ---------------- */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbx4FuKEL0-hgYLTt-9FZiT5nEWWcG8q2WK7u0U8b5XRNw8iYNyvP3kXTh6WNtZhAe6b0Q/exec';
+
+function jsonpRequest(url, params, timeoutMs){
+  return new Promise((resolve, reject)=>{
+    const cbName = 'gasCb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    const script = document.createElement('script');
+    let done = false;
+    let timer = null;
+    const cleanup = ()=>{ delete window[cbName]; script.remove(); if(timer) clearTimeout(timer); };
+    window[cbName] = (res)=>{ if(done) return; done = true; cleanup(); resolve(res); };
+    timer = setTimeout(()=>{ if(done) return; done = true; cleanup(); reject(new Error('หมดเวลาเชื่อมต่อ กรุณาลองใหม่')); }, timeoutMs || 15000);
+    script.onerror = ()=>{ if(done) return; done = true; cleanup(); reject(new Error('เชื่อมต่อ Google Apps Script ไม่ได้')); };
+    const qs = new URLSearchParams(Object.assign({}, params, {callback: cbName})).toString();
+    script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + qs;
+    document.head.appendChild(script);
+  });
+}
+
+async function saveScoreToSheet(data){
+  Swal.fire({
+    title: 'กำลังบันทึกคะแนน...',
+    html: 'กรุณารอสักครู่ อย่าปิดหน้าต่างนี้',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: ()=> Swal.showLoading()
+  });
+  try{
+    const res = await jsonpRequest(GAS_URL, data);
+    if(res && res.result === 'success'){
+      await Swal.fire({
+        icon: 'success', title: 'บันทึกสำเร็จ!',
+        text: res.message || 'บันทึกคะแนนลง Google Sheet เรียบร้อยแล้ว',
+        timer: 2000, showConfirmButton: false
+      });
+    }else{
+      throw new Error((res && res.message) || 'บันทึกไม่สำเร็จ');
+    }
+  }catch(err){
+    Swal.fire({
+      icon: 'error', title: 'บันทึกไม่สำเร็จ',
+      text: err.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+      confirmButtonText: 'ตกลง'
+    });
+  }
+}
+
+function updatePlayerNameUI(){
+  const el = $('playerNameShow'); if(el) el.textContent = save.playerName || '-';
+}
+
+async function askPlayerName(forceChange){
+  const res = await Swal.fire({
+    title: forceChange ? 'เปลี่ยนชื่อผู้เล่น' : 'สวัสดีช่างน้อย! 👋',
+    html: forceChange ? '' : 'กรอกชื่อของคุณไว้ครั้งเดียว จะจำไว้ใช้บันทึกคะแนนทุกด่านเลย',
+    input: 'text',
+    inputValue: save.playerName || '',
+    inputPlaceholder: 'เช่น น้องช่างเอก',
+    inputValidator: v => (!v || !v.trim()) && 'กรุณากรอกชื่อก่อนนะ',
+    showCancelButton: !!forceChange,
+    cancelButtonText: 'ยกเลิก',
+    confirmButtonText: forceChange ? 'บันทึก' : 'เริ่มเล่น! 🎉',
+    allowOutsideClick: false,
+    allowEscapeKey: !!forceChange
+  });
+  if(res.isConfirmed && res.value && res.value.trim()){
+    save.playerName = res.value.trim();
+    persist();
+    updatePlayerNameUI();
+  }
+}
+
+async function promptSaveScore(payload){
+  if(!save.playerName){ await askPlayerName(false); if(!save.playerName) return; }
+  saveScoreToSheet(Object.assign({}, payload, {playerName: save.playerName}));
+}
+
+function btn(text, fn, ghost){
+  const b = document.createElement('button');
+  b.className = 'btn' + (ghost ? ' ghost' : ''); b.textContent = text; b.onclick = fn;
+  return b;
+}
+function showFinal(){
+  const totalStars = Object.values(save.best).reduce((a,b)=>a+b.stars,0);
+  const totalScore = Object.values(save.best).reduce((a,b)=>a+b.total,0);
+  $('finalGrid').innerHTML =
+    '<div>คะแนนรวมทุกด่าน<b>' + totalScore + '</b></div>' +
+    '<div>ภารกิจที่สำเร็จ<b>' + Object.keys(save.best).length + '/' + LEVELS.length + '</b></div>' +
+    '<div>ดาวที่ได้<b>' + totalStars + '/15</b></div>' +
+    '<div>เหรียญช่าง<b>' + save.coins + '</b></div>';
+  open('ovFinal');
+}
+
+/* ---------------- random events ---------------- */
+function fireEvent(){
+  const L = LEVELS[G.levelIdx];
+  if(!L.events) return;
+  const pool = [];
+  if(G.player.inv.includes('drill') && !G.drillBroken) pool.push('drill');
+  pool.push('debris', 'coworker');
+  if(G.player.ppe.goggles) pool.push('goggles');
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  if(pick === 'drill'){
+    G.drillBroken = true; SFX.warn();
+    toast('⚠ สว่านเริ่มทำงานผิดปกติ! หยุดใช้ เอาไปเก็บแล้วหยิบตัวใหม่', 3600);
+  }else if(pick === 'debris'){
+    for(let i=0;i<3;i++) debris(180 + Math.random()*600, 430 + Math.random()*110);
+    SFX.warn(); toast('⚠ พื้นมีเศษวัสดุ! เก็บก่อนทำงานต่อ', 3000);
+  }else if(pick === 'coworker'){
+    G.coworker = {x:60, y:300 + Math.random()*140, t:9, safe:true};
+    SFX.warn(); toast('⚠ เพื่อนกำลังเดินผ่านพื้นที่ทำงาน หยุดใช้เครื่องมือก่อน', 3200);
+  }else{
+    G.player.ppe.goggles = false; setChips(); SFX.warn();
+    toast('⚠ แว่นตานิรภัยหลุด! กลับไปสวมใหม่ที่ตู้', 3200);
+    if(G.onPpe) G.onPpe();
+    const g = goal('ppe'); if(g && g.done){ g.done = false; renderGoals(); }
+  }
+}
+
+/* ---------------- input ---------------- */
+const keys = {};
+let actHeld = false;
+addEventListener('keydown', e=>{
+  const k = e.key.toLowerCase();
+  if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if(keys[k]) return;
+  keys[k] = true;
+  if(k === 'e'){ actHeld = true; tryAction(); }
+  if(k === 'q') dropItem();
+  if(k === 'tab'){ e.preventDefault(); cycle(1); }
+  if(['1','2','3','4'].includes(k)){ G.player && (G.player.sel = +k-1, renderSlots()); }
+  if(k === 'escape' && G.screen === 'play') togglePause();
+});
+addEventListener('keyup', e=>{
+  const k = e.key.toLowerCase(); keys[k] = false;
+  if(k === 'e'){ actHeld = false; G.hold = null; }
+});
+function axis(){
+  let x = 0, y = 0;
+  if(keys['a'] || keys['arrowleft']) x--;
+  if(keys['d'] || keys['arrowright']) x++;
+  if(keys['w'] || keys['arrowup']) y--;
+  if(keys['s'] || keys['arrowdown']) y++;
+  x += stick.x; y += stick.y;
+  const m = Math.hypot(x,y);
+  return m > 1 ? {x:x/m, y:y/m} : {x, y};
+}
+// joystick
+const stick = {x:0, y:0, id:null};
+const stickEl = $('stick'), knob = stickEl.firstElementChild;
+function stickMove(t){
+  const r = stickEl.getBoundingClientRect();
+  let dx = t.clientX - (r.left + r.width/2), dy = t.clientY - (r.top + r.height/2);
+  const m = Math.hypot(dx,dy), max = r.width/2 - 12;
+  if(m > max){ dx = dx/m*max; dy = dy/m*max; }
+  knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  stick.x = dx/max; stick.y = dy/max;
+}
+stickEl.addEventListener('touchstart', e=>{ e.preventDefault(); audioOn(); stick.id = e.changedTouches[0].identifier; stickMove(e.changedTouches[0]); }, {passive:false});
+stickEl.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches) if(t.identifier === stick.id) stickMove(t);
+}, {passive:false});
+function stickEnd(e){
+  for(const t of e.changedTouches) if(t.identifier === stick.id){
+    stick.id = null; stick.x = 0; stick.y = 0; knob.style.transform = 'translate(0,0)';
+  }
+}
+stickEl.addEventListener('touchend', stickEnd);
+stickEl.addEventListener('touchcancel', stickEnd);
+stickEl.addEventListener('mousedown', e=>{ stick.id='m'; stickMove(e); });
+addEventListener('mousemove', e=>{ if(stick.id==='m') stickMove(e); });
+addEventListener('mouseup', ()=>{ if(stick.id==='m'){ stick.id=null; stick.x=0; stick.y=0; knob.style.transform='translate(0,0)'; }});
+
+// bottom buttons
+function bindHold(el, down, up){
+  el.addEventListener('touchstart', e=>{ e.preventDefault(); audioOn(); down(); }, {passive:false});
+  el.addEventListener('touchend', e=>{ e.preventDefault(); up(); }, {passive:false});
+  el.addEventListener('mousedown', ()=>{ audioOn(); down(); });
+  addEventListener('mouseup', up);
+}
+bindHold($('btnAct'), ()=>{ actHeld = true; tryAction(); }, ()=>{ actHeld = false; G.hold = null; });
+$('btnDrop').onclick = dropItem;
+$('btnPrev').onclick = ()=>cycle(-1);
+$('btnNext').onclick = ()=>cycle(1);
+function cycle(d){ if(!G.player) return; G.player.sel = (G.player.sel + d + 4) % 4; renderSlots(); }
+function dropItem(){
+  if(!G.player) return;
+  const it = sel(); if(!it){ toast('ช่องนี้ว่างอยู่'); return; }
+  takeSel(); floorItem(G.player.x, G.player.y + 26, it); SFX.drop();
+}
+
+/* ---------------- interaction ---------------- */
+function nearest(){
+  const p = G.player; let best = null, bd = 1e9;
+  for(const e of G.ents){
+    if(!e.onUse && !e.onDone && e.kind !== 'door') continue;
+    const d = Math.hypot(e.x - p.x, e.y - p.y) - (e.w + e.h)/4;
+    if(d < 46 && d < bd){ bd = d; best = e; }
+  }
+  return best;
+}
+function tryAction(){
+  if(G.screen !== 'play' || G.paused) return;
+  const e = nearest();
+  if(!e){ return; }
+  if(e.kind === 'door'){ tryDoor(e); return; }
+  const ok = e.canUse ? e.canUse() : true;
+  if(ok !== true){ if(typeof ok === 'string' && Date.now() > G.msgLock){ toast(ok); G.msgLock = Date.now()+900; } return; }
+  if(e.hold && e.hold > 0){
+    if(e.onUse){ const handled = e.onUse(); if(handled) return; }
+    G.hold = {e, t:0};
+  }else if(e.onUse){
+    const before = G.player.inv.slice();
+    e.onUse();
+    const after = G.player.inv;
+    if(G.onPickup) for(let i=0;i<4;i++) if(after[i] && after[i] !== before[i]) G.onPickup(after[i]);
+  }
+}
+function tryDoor(d){
+  if(G.doorOpen){ finishLevel(); return; }
+  if(Date.now() > G.msgLock){
+    G.msgLock = Date.now() + 1200;
+    SFX.warn();
+    toast(d.needText || 'ยังทำภารกิจไม่ครบ ประตูยังไม่เปิด');
+    if(d.needText) addSafety(-2);
+  }
+}
+
+/* ---------------- update ---------------- */
+function update(dt){
+  if(G.screen !== 'play' || G.paused) return;
+  const p = G.player;
+  const a = axis();
+  const spd = 200;
+  p.moving = Math.hypot(a.x, a.y) > 0.1;
+  if(p.moving){
+    p.anim += dt;
+    if(Math.abs(a.x) > Math.abs(a.y)) p.dir = a.x > 0 ? 'right' : 'left';
+    else p.dir = a.y > 0 ? 'down' : 'up';
+    moveEnt(p, a.x*spd*dt, a.y*spd*dt);
+    if(Math.floor(p.anim*6) !== Math.floor((p.anim - dt)*6)) SFX.step();
+  }
+  if(p.moodT > 0){ p.moodT -= dt; if(p.moodT <= 0) p.mood = 'ok'; }
+
+  // walk through the open door to auto-advance, no button needed
+  if(G.doorOpen){
+    const d = ents('door')[0];
+    if(d){
+      const near = Math.abs(p.x - d.x) < (d.w/2 + 20) && Math.abs(p.y - d.y) < (d.h/2 + 20);
+      if(near){ finishLevel(); return; }
+    }
+  }
+
+  // hold action
+  if(G.hold){
+    const e = G.hold.e;
+    const near = Math.hypot(e.x - p.x, e.y - p.y) - (e.w + e.h)/4 < 52;
+    const ok = e.canUse ? e.canUse() : true;
+    if(!actHeld || !near || ok !== true){
+      if(ok !== true && typeof ok === 'string' && Date.now() > G.msgLock){ toast(ok); G.msgLock = Date.now()+900; }
+      G.hold = null;
+    }else{
+      G.hold.t += dt;
+      if(Math.random() < 0.5) G.parts.push({x:e.x + (Math.random()*40-20), y:e.y, vx:(Math.random()*60-30), vy:-40-Math.random()*40, life:.4, c:'#ffd75e', r:2});
+      if(Math.random() < 0.25) SFX.drill();
+      if(G.hold.t >= e.hold){ const done = e.onDone; G.hold = null; if(done) done.call(e); }
+    }
+  }
+
+  // timer
+  G.time -= dt;
+  if(G.time <= 0){ failLevel('หมดเวลา! ลองวางแผนขั้นตอนให้ไวขึ้นอีกนิด'); return; }
+
+  // tutorial
+  G.tutT += dt;
+  if(G.tutorial && G.tutIdx < G.tutorial.length && G.tutT >= G.tutorial[G.tutIdx].at){
+    hint(G.tutorial[G.tutIdx].t, 3000); G.tutIdx++;
+  }
+
+  // random events
+  const L = LEVELS[G.levelIdx];
+  if(L.events){
+    G.eventTimer -= dt;
+    if(G.eventTimer <= 0){ fireEvent(); G.eventTimer = 20 + Math.random()*12; }
+  }
+
+  // coworker npc
+  if(G.coworker){
+    const c = G.coworker;
+    c.x += 70*dt; c.t -= dt;
+    if(c.t <= 0 || c.x > W){
+      if(c.safe) addSafety(3, 'รอจนเพื่อนเดินผ่านแล้วค่อยทำงานต่อ — ปลอดภัยมาก!');
+      G.coworker = null;
+    }
+  }
+
+  // moving cart hazard
+  for(const e of ents('cart')){
+    const [pA, pB] = e.path;
+    e.p += (e.dirn = e.dirn||1) * e.spd * dt / Math.hypot(pB[0]-pA[0], pB[1]-pA[1]);
+    if(e.p > 1){ e.p = 1; e.dirn = -1; }
+    if(e.p < 0){ e.p = 0; e.dirn = 1; }
+    e.x = pA[0] + (pB[0]-pA[0])*e.p; e.y = pA[1] + (pB[1]-pA[1])*e.p;
+    e.cd -= dt;
+    if(e.cd <= 0 && Math.abs(e.x - p.x) < 48 && Math.abs(e.y - p.y) < 38){
+      e.cd = 2; addHp(-12); addSafety(-6, 'ชนรถเข็น! เดินระวังสิ่งกีดขวางด้วย');
+      p.mood = 'shock'; p.moodT = 1;
+      const dx = p.x - e.x || 1; p.x += Math.sign(dx)*40;
+    }
+  }
+
+  // particles
+  for(let i=G.parts.length-1;i>=0;i--){
+    const q = G.parts[i];
+    q.x += q.vx*dt; q.y += q.vy*dt; q.vy += 160*dt; q.life -= dt;
+    if(q.life <= 0) G.parts.splice(i,1);
+  }
+  if(shakeT > 0) shakeT -= dt;
+  if(hintT > 0){ hintT -= dt; if(hintT <= 0) $('hint').classList.remove('show'); }
+  setChips();
+}
+function moveEnt(p, dx, dy){
+  const r = 15;
+  p.x += dx;
+  for(const e of G.ents) if(e.solid && hit(p, e, r)){ p.x -= dx; break; }
+  p.y += dy;
+  for(const e of G.ents) if(e.solid && hit(p, e, r)){ p.y -= dy; break; }
+  p.x = Math.max(34, Math.min(W-34, p.x));
+  p.y = Math.max(40, Math.min(H-34, p.y));
+}
+function hit(p, e, r){
+  return Math.abs(p.x - e.x) < e.w/2 + r && Math.abs(p.y - e.y) < e.h/2 + r;
+}
+
+/* ---------------- render ---------------- */
+function rr(x, y, w, h, r, fill){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath(); if(fill) ctx.fill(); else ctx.stroke();
+}
+function emo(ch, x, y, size){
+  ctx.font = size + 'px "Mali", "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(ch, x, y);
+}
+function label(text, x, y, size, color){
+  ctx.font = '700 ' + (size||13) + 'px Mali, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(8,12,18,.55)';
+  const w = ctx.measureText(text).width + 12;
+  rr(x - w/2, y - (size||13)/2 - 4, w, (size||13) + 8, 6, true);
+  ctx.fillStyle = color || '#eef3f8';
+  ctx.fillText(text, x, y);
+}
+function drawFloor(){
+  ctx.fillStyle = '#20293a'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#27334a'; ctx.lineWidth = 2;
+  for(let x=0;x<W;x+=48){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<H;y+=48){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  // safety stripes on floor edges
+  ctx.save(); ctx.globalAlpha = .28;
+  for(let x=-40;x<W;x+=28){
+    ctx.fillStyle = (x/28|0)%2 ? '#ffc419' : '#2d3548';
+    ctx.beginPath(); ctx.moveTo(x, H-46); ctx.lineTo(x+18, H-46); ctx.lineTo(x+8, H-30); ctx.lineTo(x-10, H-30); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawEnt(e){
+  if(e.draw){ e.draw(e); return; }
+  const x = e.x - e.w/2, y = e.y - e.h/2;
+  switch(e.kind){
+    case 'wall':
+      ctx.fillStyle = '#39485c'; ctx.fillRect(x, y, e.w, e.h);
+      ctx.fillStyle = '#2c3849'; ctx.fillRect(x, y+e.h-6, e.w, 6); break;
+    case 'crate':
+      ctx.fillStyle = '#8a6033'; rr(x, y, e.w, e.h, 6, true);
+      ctx.fillStyle = '#a9743d'; rr(x+5, y+5, e.w-10, e.h-10, 5, true);
+      ctx.strokeStyle = '#6d4a26'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x+6, y+e.h/2); ctx.lineTo(x+e.w-6, y+e.h/2); ctx.stroke(); break;
+    case 'rack':
+      ctx.fillStyle = '#334156'; rr(x, y, e.w, e.h, 8, true);
+      ctx.fillStyle = ITEMS[e.item].c; rr(x+6, y+6, e.w-12, e.h-24, 5, true);
+      emo(ITEMS[e.item].e, e.x, e.y - 4, 26);
+      label(e.label || ITEMS[e.item].n, e.x, y - 12, 12, '#cfe0f2'); break;
+    case 'return':
+      ctx.fillStyle = '#2f5d4a'; rr(x, y, e.w, e.h, 8, true);
+      ctx.strokeStyle = '#42d392'; ctx.lineWidth = 2; rr(x+5, y+5, e.w-10, e.h-10, 6, false);
+      emo('🧰', e.x, e.y, 24); label(e.label, e.x, y-12, 12, '#9be9c4'); break;
+    case 'locker':
+      ctx.fillStyle = G.player.ppe[e.ppe] ? '#3c6b52' : '#3a4759'; rr(x, y, e.w, e.h, 8, true);
+      ctx.fillStyle = '#26303e'; rr(x+5, y+5, e.w-10, e.h-10, 6, true);
+      emo(PPE[e.ppe].e, e.x, e.y, 26);
+      label(PPE[e.ppe].n, e.x, y + e.h + 12, 11, G.player.ppe[e.ppe] ? '#9be9c4' : '#cfe0f2'); break;
+    case 'sign':
+      ctx.fillStyle = '#ffc419'; rr(x, y, e.w, e.h, 8, true);
+      ctx.fillStyle = '#20160a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '700 13px Mali, sans-serif';
+      wrapText(e.text, e.x, e.y - 8, e.w - 18, 16);
+      ctx.font = '400 11px Mali, sans-serif'; ctx.fillStyle = '#5a4510';
+      ctx.fillText(e.sub || '', e.x, e.y + e.h/2 - 10); break;
+    case 'bench':
+      ctx.fillStyle = '#4a5b71'; rr(x, y, e.w, e.h, 10, true);
+      ctx.fillStyle = e.flash > 0 ? (e.test > 0 ? '#42d392' : '#ff6b3d') : '#39485c';
+      rr(x+8, y+8, e.w-16, e.h-16, 8, true);
+      if(e.flash > 0){ e.flash -= 0.02; emo(e.test > 0 ? '💪' : '💥', e.x, e.y, 30); }
+      else emo('⚖️', e.x, e.y, 26);
+      label(e.label, e.x, y - 12, 12, '#cfe0f2'); break;
+    case 'job':
+      ctx.fillStyle = e.ok ? '#2f5d4a' : '#334156'; rr(x, y, e.w, e.h, 10, true);
+      ctx.fillStyle = '#26303e'; rr(x+7, y+26, e.w-14, e.h-33, 8, true);
+      ctx.font = '700 12px Mali, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffe58a'; ctx.fillText(e.text, e.x, y + 14);
+      if(e.ok) emo('✅', e.x, e.y + 14, 26);
+      else if(e.fail > 0){ emo('🙈', e.x, e.y + 14, 26); e.fail -= 0.02; }
+      else emo('❔', e.x, e.y + 14, 24);
+      break;
+    case 'station':
+      ctx.fillStyle = e.ok ? '#2f5d4a' : '#3d4d63'; rr(x, y, e.w, e.h, 10, true);
+      ctx.fillStyle = '#2a3546'; rr(x+7, y+7, e.w-14, e.h-14, 8, true);
+      emo(e.ok ? '✅' : (e.need ? ITEMS[e.need].e : '🙌'), e.x, e.y, 28);
+      label(e.label, e.x, y - 12, 11, '#cfe0f2'); break;
+    case 'inspect':
+      ctx.fillStyle = '#3b4f6b'; rr(x, y, e.w, e.h, 10, true);
+      emo('🔍', e.x, e.y, 28); label('จุดตรวจสอบ', e.x, y - 12, 12, '#cfe0f2'); break;
+    case 'mirror':
+      ctx.fillStyle = '#4a5b71'; rr(x, y, e.w, e.h, 12, true);
+      ctx.fillStyle = '#9ad7ea'; rr(x+7, y+7, e.w-14, e.h-14, 9, true);
+      emo('🪞', e.x, e.y, 30); label('กระจกตรวจความพร้อม', e.x, y - 12, 11, '#cfe0f2'); break;
+    case 'bin':
+      ctx.fillStyle = '#3a4759'; rr(x, y, e.w, e.h, 8, true); emo('🗑️', e.x, e.y, 26);
+      label(e.label, e.x, y - 12, 11, '#cfe0f2'); break;
+    case 'deliver':
+      ctx.fillStyle = '#5a4a1e'; rr(x, y, e.w, e.h, 10, true);
+      ctx.strokeStyle = '#ffc419'; ctx.lineWidth = 3; rr(x+5, y+5, e.w-10, e.h-10, 7, false);
+      emo('📦', e.x, e.y, 28); label('ส่งงาน', e.x, y - 12, 12, '#ffe58a'); break;
+    case 'debris':
+      ctx.fillStyle = '#6b7484';
+      for(let i=0;i<4;i++){ ctx.beginPath(); ctx.ellipse(e.x - 12 + i*8, e.y + (i%2?3:-3), 6, 4, i, 0, 7); ctx.fill(); }
+      break;
+    case 'item':
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(e.x, e.y+14, 16, 6, 0, 0, 7); ctx.fill();
+      emo(ITEMS[e.item].e, e.x, e.y, 26); break;
+    case 'cart':
+      ctx.fillStyle = '#ff6b3d'; rr(x, y, e.w, e.h, 8, true);
+      ctx.fillStyle = '#1b222c'; ctx.fillRect(x+8, y+e.h-8, 12, 8); ctx.fillRect(x+e.w-20, y+e.h-8, 12, 8);
+      emo('🛒', e.x, e.y - 4, 24); break;
+    case 'door':
+      ctx.fillStyle = G.doorOpen ? '#42d392' : '#8a3b2a'; rr(x, y, e.w, e.h, 8, true);
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(x+6, y+8, e.w-12, e.h-16, 6, true);
+      emo(G.doorOpen ? '🚪' : '🔒', e.x, e.y, 24);
+      label(G.doorOpen ? 'ไปด่านถัดไป' : 'ประตูล็อก', e.x, y - 14, 11, G.doorOpen ? '#9be9c4' : '#ffb1a1'); break;
+  }
+}
+function wrapText(text, cx, cy, maxW, lh){
+  const lines = [];
+  let line = '';
+  for(const ch of text){
+    const test = line + ch;
+    if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = (ch === ' ' ? '' : ch); }
+    else line = test;
+  }
+  if(line) lines.push(line);
+  const show = lines.slice(0, 3);
+  show.forEach((l,i)=>ctx.fillText(l, cx, cy - (show.length-1)*lh/2 + i*lh));
+}
+function drawPlayer(p){
+  const bob = p.moving ? Math.sin(p.anim*14)*2 : 0;
+  const swing = p.moving ? Math.sin(p.anim*14)*6 : 0;
+  ctx.save(); ctx.translate(p.x, p.y + bob);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, 20, 16, 6, 0, 0, 7); ctx.fill();
+  // legs
+  ctx.fillStyle = '#2b3550';
+  ctx.fillRect(-9, 6 + Math.max(0,swing)/2, 7, 15);
+  ctx.fillRect(2, 6 + Math.max(0,-swing)/2, 7, 15);
+  // body
+  ctx.fillStyle = SUITS[save.equip.suit] || SUITS.blue;
+  rr(-14, -12, 28, 24, 8, true);
+  // apron
+  if(p.ppe.apron){ ctx.fillStyle = '#e8e3d2'; rr(-10, -8, 20, 20, 5, true); }
+  // arms
+  ctx.fillStyle = p.ppe.gloves ? '#3d6fd6' : '#f6c89a';
+  ctx.beginPath(); ctx.arc(-16, 2 + swing/2, 5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(16, 2 - swing/2, 5, 0, 7); ctx.fill();
+  // head
+  ctx.fillStyle = '#f6c89a'; ctx.beginPath(); ctx.arc(0, -22, 11, 0, 7); ctx.fill();
+  // face
+  if(p.dir !== 'up'){
+    ctx.fillStyle = '#20160a';
+    const ox = p.dir === 'left' ? -3 : p.dir === 'right' ? 3 : 0;
+    ctx.beginPath(); ctx.arc(-4+ox, -23, 1.6, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(4+ox, -23, 1.6, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#20160a'; ctx.lineWidth = 1.5; ctx.beginPath();
+    if(p.mood === 'shock') ctx.arc(ox, -17, 3, 0, 7);
+    else ctx.arc(ox, -19, 4, 0.15*Math.PI, 0.85*Math.PI);
+    ctx.stroke();
+  }
+  // mask
+  if(p.ppe.mask && p.dir !== 'up'){ ctx.fillStyle = '#d7e9f5'; rr(-8, -21, 16, 10, 4, true); }
+  // goggles
+  if(p.ppe.goggles){ ctx.fillStyle = 'rgba(160,220,240,.9)'; rr(-11, -29, 22, 8, 4, true); ctx.strokeStyle='#4a6b7a'; ctx.lineWidth=1.5; rr(-11,-29,22,8,4,false); }
+  // helmet
+  ctx.fillStyle = HELMETS[save.equip.helmet] || HELMETS.yellow;
+  ctx.beginPath(); ctx.arc(0, -28, 12, Math.PI, 0); ctx.fill();
+  ctx.fillRect(-14, -29, 28, 4);
+  // carried item
+  const it = p.inv[p.sel];
+  if(it) emo(ITEMS[it].e, 18, -12, 20);
+  // mood bubble
+  if(p.mood === 'shock') emo('❗', 0, -46, 22);
+  if(p.mood === 'happy') emo('🎉', 0, -46, 22);
+  if(!p.ppe.goggles && (LEVELS[G.levelIdx].ppe||[]).includes('goggles')) emo('⚠️', -20, -42, 18);
+  ctx.restore();
+}
+function drawCoworker(){
+  const c = G.coworker; if(!c) return;
+  ctx.save(); ctx.translate(c.x, c.y);
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(0, 20, 15, 6, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#c4553f'; rr(-13, -12, 26, 24, 8, true);
+  ctx.fillStyle = '#f6c89a'; ctx.beginPath(); ctx.arc(0, -22, 10, 0, 7); ctx.fill();
+  ctx.fillStyle = '#eef3f8'; ctx.beginPath(); ctx.arc(0, -27, 11, Math.PI, 0); ctx.fill();
+  ctx.restore();
+  label('มีคนเดินผ่าน!', c.x, c.y - 48, 12, '#ffb1a1');
+}
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = '#0d1219'; ctx.fillRect(0,0,cv.width,cv.height);
+  const sx = shakeT > 0 ? (Math.random()*2-1)*shakeA : 0;
+  const sy = shakeT > 0 ? (Math.random()*2-1)*shakeA : 0;
+  ctx.setTransform(view.s, 0, 0, view.s, view.ox + sx, view.oy + sy);
+  drawFloor();
+  if(!G.player) return;
+  const list = G.ents.slice().sort((a,b)=>(a.y + a.h/2) - (b.y + b.h/2));
+  const py = G.player.y;
+  let drawn = false;
+  for(const e of list){
+    if(!drawn && e.y > py){ drawPlayer(G.player); drawCoworker(); drawn = true; }
+    drawEnt(e);
+  }
+  if(!drawn){ drawPlayer(G.player); drawCoworker(); }
+  // particles
+  for(const q of G.parts){ ctx.globalAlpha = Math.max(0, q.life); ctx.fillStyle = q.c; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // hold progress
+  if(G.hold){
+    const e = G.hold.e, pct = Math.min(1, G.hold.t/e.hold);
+    ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.4)';
+    ctx.beginPath(); ctx.arc(e.x, e.y - e.h/2 - 24, 16, 0, 7); ctx.stroke();
+    ctx.strokeStyle = '#ffc419';
+    ctx.beginPath(); ctx.arc(e.x, e.y - e.h/2 - 24, 16, -Math.PI/2, -Math.PI/2 + pct*Math.PI*2); ctx.stroke();
+  }
+  // action prompt
+  const n = nearest();
+  if(n && !G.hold){
+    let txt = n.kind === 'door' ? (G.doorOpen ? 'เข้าประตู' : 'ประตูล็อก') : (typeof n.label === 'string' ? n.label : 'ใช้งาน');
+    label('E · ' + txt, G.player.x, G.player.y - 56, 13, '#ffe58a');
+  }
+}
+
+/* ---------------- loop ---------------- */
+let last = performance.now();
+let lastW = 0, lastH = 0;
+function loop(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  const r = cv.parentElement.getBoundingClientRect();
+  if(Math.abs(r.width - lastW) > 1 || Math.abs(r.height - lastH) > 1){ lastW = r.width; lastH = r.height; resize(); }
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- screens/menus ---------------- */
+function open(id){ closeAll(); $(id).classList.add('show'); }
+function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
+function toMenu(){ G.screen = 'menu'; stopBgm(); $('mTitle').childNodes[0].nodeValue = 'โรงงานชุลมุน'; $('mSub').textContent = 'ภารกิจช่างมือโปร'; setChips(); open('ovMenu'); }
+function togglePause(){
+  if(G.screen !== 'play') return;
+  G.paused = !G.paused;
+  if(G.paused) open('ovPause'); else closeAll();
+}
+$('btnStart').onclick = ()=>{ audioOn(); startLevel(0); };
+$('btnLevels').onclick = showLevels;
+$('btnShop').onclick = showShop;
+$('btnAch').onclick = showAch;
+$('btnPause').onclick = ()=>{ if(G.screen==='play') togglePause(); else toMenu(); };
+$('btnResume').onclick = ()=>{ G.paused = false; closeAll(); };
+$('btnRetry').onclick = ()=>startLevel(G.levelIdx);
+$('btnQuit').onclick = toMenu;
+$('btnAgain').onclick = ()=>startLevel(0);
+$('btnPickLv').onclick = showLevels;
+$('btnSeeAch').onclick = showAch;
+$('btnSound').onclick = ()=>{
+  save.muted = !save.muted; persist();
+  $('btnSound').textContent = save.muted ? '🔇' : '🔊';
+  if(save.muted) stopBgm(); else { audioOn(); if(G.screen==='play') startBgm(); }
+};
+$('btnSound').textContent = save.muted ? '🔇' : '🔊';
+$('goalsHead').onclick = ()=>{ $('goalsWrap').classList.toggle('collapsed'); $('goalsHead').classList.remove('attn'); };
+$('btnPanels').onclick = ()=>{
+  const hidden = $('stage').classList.toggle('panels-hidden');
+  $('btnPanels').classList.toggle('active', hidden);
+  $('btnPanels').textContent = hidden ? '👁️' : '🗂️';
+};
+if(window.matchMedia('(max-width:640px)').matches){ $('goalsWrap').classList.add('collapsed'); }
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick = ()=>{
+  if(G.screen !== 'play') toMenu();
+  else if(G.paused) open('ovPause');
+  else closeAll();
+});
+
+function showLevels(){
+  const box = $('lvList'); box.innerHTML = '';
+  LEVELS.forEach((L,i)=>{
+    const locked = i >= save.unlocked;
+    const b = save.best['L'+i];
+    const d = document.createElement('div');
+    d.className = 'lv' + (locked ? ' locked' : '');
+    d.innerHTML = '<b>' + L.name + '</b><small>' + L.sub + '</small><div style="margin-top:4px">' +
+      (locked ? '🔒 ยังไม่ปลดล็อก' : (b ? '⭐'.repeat(b.stars) + '☆'.repeat(3-b.stars) + ' · ' + b.total + '/300' : 'ยังไม่เคยเล่น')) + '</div>';
+    if(!locked) d.onclick = ()=>{ audioOn(); startLevel(i); };
+    box.appendChild(d);
+  });
+  open('ovLevels');
+}
+function showShop(){
+  $('shopCoin').textContent = save.coins;
+  const box = $('shopGrid'); box.innerHTML = '';
+  SHOP.forEach(s=>{
+    const owned = !!save.owned[s.id];
+    const on = save.equip[s.grp] === s.val;
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = '<div class="e">' + s.e + '</div><b>' + s.n + '</b><div style="color:var(--dim)">' + (owned ? 'มีแล้ว' : s.p + ' 🪙') + '</div>';
+    const b = document.createElement('button');
+    b.textContent = owned ? (on ? 'กำลังใช้' : 'ใช้ชิ้นนี้') : 'ซื้อ';
+    if(owned) b.className = 'owned';
+    b.disabled = !owned && save.coins < s.p;
+    b.onclick = ()=>{
+      if(!save.owned[s.id]){
+        if(save.coins < s.p) return;
+        save.coins -= s.p; save.owned[s.id] = true; SFX.good();
+      }
+      if(s.grp === 'suit' || s.grp === 'helmet' || s.grp === 'box' || s.grp === 'bench') save.equip[s.grp] = s.val;
+      persist(); showShop(); setChips();
+    };
+    d.appendChild(b); box.appendChild(d);
+  });
+  open('ovShop');
+}
+function showAch(){
+  const box = $('achList'); box.innerHTML = '';
+  ACHS.forEach(a=>{
+    const d = document.createElement('div');
+    d.className = 'ach' + (save.ach[a.id] ? ' on' : '');
+    d.innerHTML = '<div class="e">' + a.e + '</div><div><b>' + a.n + '</b><small>' + a.d + '</small></div>';
+    box.appendChild(d);
+  });
+  open('ovAch');
+}
+
+/* ---------------- boot ---------------- */
+$('btnEditName').onclick = ()=>askPlayerName(true);
+updatePlayerNameUI();
+if(!save.playerName){ askPlayerName(false); }
+resize();
+setChips();
+requestAnimationFrame(loop);
+// เตรียมผู้เล่นไว้วาดพื้นหลังเมนู
+G.player = {x:480, y:380, vx:0, vy:0, dir:'down', anim:0, moving:false,
+  inv:[null,null,null,null], sel:0, ppe:{goggles:true,gloves:false,mask:false,apron:true}, mood:'ok', moodT:0};
+renderSlots();
+setTimeout(resize, 120);
+</script>
+</body>
+</html>
